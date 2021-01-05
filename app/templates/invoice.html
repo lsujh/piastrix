@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+	<div class="row">
+		<div class="col-md-4">
+        </div>
+		<div class="col-md-4">
+			<form method="{{ form.method }}" action="{{ form.url }}" accept-charset="UTF-8">
+				{% with form = form.data %}
+				{% for key, value in form.items() %}
+				<input type="hidden" name="{{ key }}" value="{{ value }}">
+				{% endfor %}
+				{% endwith %}
+				<input type="submit" />
+			</form>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	document.getElementById("form").submit();
+</script>
+{% endblock %}
