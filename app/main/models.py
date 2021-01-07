@@ -4,6 +4,7 @@ from app import db
 
 class Payment(db.Model):
     __tablename__ = 'payment'
+    __table_args__ = {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
     amount = db.Column(db.Numeric, index=True)
@@ -19,6 +20,7 @@ class Payment(db.Model):
         self.description = description
         self.shop_id = shop_id
         self.shop_order_id = shop_order_id
+        self.timestamp = datetime.utcnow()
 
     def __repr__(self):
         return self.shop_order_id

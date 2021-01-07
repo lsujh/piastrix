@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -9,9 +10,10 @@ migrate = Migrate()
 bootstrap = Bootstrap()
 
 
-def create_app(config):
+def create_app():
     app = Flask(__name__)
-    app.config.from_object(config)
+    app_settings = os.getenv('FLASK_ENV', 'config.Config')
+    app.config.from_object(app_settings)
     db.init_app(app)
     migrate.init_app(app, db)
     bootstrap.init_app(app)

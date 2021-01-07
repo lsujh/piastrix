@@ -14,6 +14,11 @@ class Config(object):
     # conn = psycopg2.connect(SQLALCHEMY_DATABASE_URI, sslmode='require')
 
 
+class TestConfig(Config):
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL',
+                                             ('sqlite:///' + os.path.join(basedir, 'app_test.db')))
+    TESTING = True
+
 
 
     

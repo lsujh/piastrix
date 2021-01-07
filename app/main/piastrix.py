@@ -37,18 +37,9 @@ class Piastrix:
             "sign": sign,
             "description": description,
         }
-        request = Request('https://core.piastrix.com/bill/create',
-                          json.dumps(data).encode("utf-8"),
-                          headers={"Content-Type": "application/json"}, method="POST")
-        with urlopen(request) as response:
-            data = json.loads(response.read())
-            if data["result"]:
-                data = data["data"]
-                self._save(amount, currency, description, Config.SHOP_ID, shop_order_id)
-                return redirect(data["url"])
-            else:
-                flash(f'Ошибка. Пожалуйста, попробуйте еще раз: {data["message"]}')
-                return redirect(url_for('payment'))
+        req = Request('https://core.piastrix.com/bill/create', json.dumps(data).encode("utf-8"),
+                      headers={"Content-Type": "application/json"}, method="POST")
+        return self.pay_bill_invoice(req, amount, currency, description, shop_order_id)
 
     def invoice(self, amount, currency, description, shop_order_id):
         sign = self._sign(amount=amount, currency=currency, shop_id=Config.SHOP_ID,
@@ -62,15 +53,22 @@ class Piastrix:
             "payway": Config.PAY_WAY,
             "sign": sign
         }
-        request = Request('https://core.piastrix.com/invoice/create',
-                          json.dumps(data).encode("utf-8"),
-                          headers={"Content-Type": "application/json"}, method="POST")
-        with urlopen(request) as response:
+        req = Request('https://core.piastrix.com/invoice/create', json.dumps(data).encode("utf-8"),
+                      headers={"Content-Type": "application/json"}, method="POST")
+        return self.pay_bill_invoice(req, amount, currency, description, shop_order_id)
+
+    def pay_bill_invoice(self, req, amount, currency, description, shop_order_id):
+        with urlopen(req) as response:
             data = json.loads(response.read())
             if data["result"]:
-                form = data["data"]
-                self._save(amount, currency, description, Config.SHOP_ID, shop_order_id)
-                return render_template('invoice.html', form=form)
+                if currency == '643':
+                    form = data["data"]
+                    self._save(amount, currency, description, Config.SHOP_ID, shop_order_id)
+                    return render_template('invoice.html', form=form)
+                elif currency == '840':
+                    data = data["data"]
+                    self._save(amount, currency, description, Config.SHOP_ID, shop_order_id)
+                    return redirect(data["url"])
             else:
                 flash(f'Ошибка. Пожалуйста, попробуйте еще раз: {data["message"]}')
                 return redirect(url_for('payment'))

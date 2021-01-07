@@ -1,10 +1,9 @@
-import os
 import logging
 
 from app import create_app
 
 
-app = create_app(os.getenv('FLASK_ENV', 'config.Config'))
+app = create_app()
 logging.basicConfig(filename='error.log', level=logging.INFO)
 
 
