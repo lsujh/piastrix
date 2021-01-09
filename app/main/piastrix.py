@@ -8,79 +8,79 @@ from .models import Payment
 from config import Config
 
 
-class Piastrix:
-    def pay(self, amount, currency, description, shop_order_id):
-        sign = self._sign(amount=amount, currency=currency, shop_id=Config.SHOP_ID,
-                          shop_order_id=shop_order_id)
+def piastrix(amount, currency, description, shop_order_id):
+    if currency == '978':
+        sign = sign_(amount=amount, currency=currency, shop_id=Config.SHOP_ID, shop_order_id=shop_order_id)
         form = {
-            "url": 'https://pay.piastrix.com/ru/pay',
-            "name": 'Pay',
-            "amount": amount,
-            "currency": currency,
-            "description": description,
-            "shop_id": Config.SHOP_ID,
-            "shop_order_id": shop_order_id,
-            "sign": sign,
+            'url': 'https://pay.piastrix.com/ru/pay',
+            'name': 'Pay',
+            'amount': amount,
+            'currency': currency,
+            'description': description,
+            'shop_id': Config.SHOP_ID,
+            'shop_order_id': shop_order_id,
+            'sign': sign,
         }
-        self._save(amount, currency, description, Config.SHOP_ID, shop_order_id)
+        save(amount, currency, description, Config.SHOP_ID, shop_order_id)
         return render_template('pay.html', form=form)
 
-    def bill(self, amount, currency, description, shop_order_id):
-        sign = self._sign(shop_amount=amount, shop_currency=currency, shop_id=Config.SHOP_ID,
-                          shop_order_id=shop_order_id, payer_currency=currency)
+    elif currency == '840':
+        sign = sign_(shop_amount=amount, shop_currency=currency, shop_id=Config.SHOP_ID,
+                     shop_order_id=shop_order_id, payer_currency=currency)
         data = {
-            "payer_currency": currency,
-            "shop_amount": amount,
-            "shop_currency": currency,
-            "shop_id": Config.SHOP_ID,
-            "shop_order_id": shop_order_id,
-            "sign": sign,
-            "description": description,
+            'payer_currency': currency,
+            'shop_amount': amount,
+            'shop_currency': currency,
+            'shop_id': Config.SHOP_ID,
+            'shop_order_id': shop_order_id,
+            'sign': sign,
+            'description': description,
         }
-        req = Request('https://core.piastrix.com/bill/create', json.dumps(data).encode("utf-8"),
-                      headers={"Content-Type": "application/json"}, method="POST")
-        return self.pay_bill_invoice(req, amount, currency, description, shop_order_id)
+        req = Request('https://core.piastrix.com/bill/create', json.dumps(data).encode('utf-8'),
+                      headers={'Content-Type': 'application/json'}, method='POST')
+        return pay_bill_invoice(req, amount, currency, description, shop_order_id)
 
-    def invoice(self, amount, currency, description, shop_order_id):
-        sign = self._sign(amount=amount, currency=currency, shop_id=Config.SHOP_ID,
-                          shop_order_id=shop_order_id, payway=Config.PAY_WAY)
+    elif currency == '643':
+        sign = sign_(amount=amount, currency=currency, shop_id=Config.SHOP_ID,
+                     shop_order_id=shop_order_id, payway=Config.PAY_WAY)
         data = {
-            "amount": amount,
-            "currency": currency,
-            "shop_id": Config.SHOP_ID,
-            "shop_order_id": shop_order_id,
-            "description": description,
-            "payway": Config.PAY_WAY,
-            "sign": sign
+            'amount': amount,
+            'currency': currency,
+            'shop_id': Config.SHOP_ID,
+            'shop_order_id': shop_order_id,
+            'description': description,
+            'payway': Config.PAY_WAY,
+            'sign': sign
         }
-        req = Request('https://core.piastrix.com/invoice/create', json.dumps(data).encode("utf-8"),
-                      headers={"Content-Type": "application/json"}, method="POST")
-        return self.pay_bill_invoice(req, amount, currency, description, shop_order_id)
+        req = Request('https://core.piastrix.com/invoice/create', json.dumps(data).encode('utf-8'),
+                      headers={'Content-Type': 'application/json'}, method='POST')
+        return pay_bill_invoice(req, amount, currency, description, shop_order_id)
 
-    def pay_bill_invoice(self, req, amount, currency, description, shop_order_id):
-        with urlopen(req) as response:
-            data = json.loads(response.read())
-            if data["result"]:
-                if currency == '643':
-                    form = data["data"]
-                    self._save(amount, currency, description, Config.SHOP_ID, shop_order_id)
-                    return render_template('invoice.html', form=form)
-                elif currency == '840':
-                    data = data["data"]
-                    self._save(amount, currency, description, Config.SHOP_ID, shop_order_id)
-                    return redirect(data["url"])
-            else:
-                flash(f'Ошибка. Пожалуйста, попробуйте еще раз: {data["message"]}')
-                return redirect(url_for('payment'))
 
-    @staticmethod
-    def _sign(**kwargs):
-        data = [str(kwargs[key]) for key in sorted(kwargs.keys())]
-        hex_hash = hashlib.sha256((":".join(data) + Config.SECRET_KEY).encode("utf-8")).hexdigest()
-        return hex_hash
+def pay_bill_invoice(req, amount, currency, description, shop_order_id):
+    with urlopen(req) as response:
+        data = json.loads(response.read())
+        if data['result']:
+            if currency == '643':
+                form = data['data']
+                save(amount, currency, description, Config.SHOP_ID, shop_order_id)
+                return render_template('invoice.html', form=form)
+            elif currency == '840':
+                data = data['data']
+                save(amount, currency, description, Config.SHOP_ID, shop_order_id)
+                return redirect(data['url'])
+        else:
+            flash(f'Ошибка. Пожалуйста, попробуйте еще раз: {data["message"]}')
+            return redirect(url_for('main:payment'))
 
-    @staticmethod
-    def _save(*args):
-        payment = Payment(*args)
-        db.session.add(payment)
-        db.session.commit()
+
+def sign_(**kwargs):
+    data = [str(kwargs[key]) for key in sorted(kwargs.keys())]
+    hex_hash = hashlib.sha256((':'.join(data) + Config.SECRET_KEY).encode('utf-8')).hexdigest()
+    return hex_hash
+
+
+def save(*args):
+    payment = Payment(*args)
+    db.session.add(payment)
+    db.session.commit()
